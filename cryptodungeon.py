@@ -47,21 +47,21 @@ class mapclass:  # Map class used for each room, 2D array
 
 
 class boarditem:  # Super class for all objects that can be built/spawned on the map
-    def __init__(self, name, symbol):
+    def __init__(self, name, symbol, flavor="This object has no flavor"):
         self.name = name
         self.symbol = symbol  # Symbol is the letter tht will represent them on the board
+        self.flavor = flavor
 
 
 class monsterclass(boarditem):  # Class for monsters which appear on the board
-    def __init__(self, name, symbol, flavor="This monster has no flavor.", frequency=10):
-        super().__init__(name, symbol)
-        self.flavor = flavor
+    def __init__(self, name, symbol, flavor="This object has no flavor", frequency=10):
+        super().__init__(name, symbol, flavor)
         self.frequency = frequency
 
 
 class buildingclass(boarditem):  # Class for buildings on the board
-    def __init__(self, constructiondelay, name, symbol):
-        super().__init__(name, symbol)
+    def __init__(self, constructiondelay, name, symbol, flavor="This object has no flavor"):
+        super().__init__(name, symbol, flavor)
         self.constructiondelay = constructiondelay
 
 
@@ -89,12 +89,12 @@ def buildingnames():
 
 rooms = []
 codes = []
-monsters = [monsterclass("Mongoloid", "M", "The Mongoloid was once human, like yourself, but his form has been "
+monsters = [monsterclass("Mongoloid", "m", "The Mongoloid was once human, like yourself, but his form has been "
                                            "distored by the dark magicks that dwell here.", 50),
-            monsterclass("Skeleton", "S", "Battered bones: a dried, but not completely empty skeleton..."),
-            monsterclass("Pirate Skeleton", "P", "The pirate skeleton was lead into the darkness by his greed, "
+            monsterclass("Skeleton", "s", "Battered bones: a dried, but not completely empty skeleton..."),
+            monsterclass("Pirate Skeleton", "p", "The pirate skeleton was lead into the darkness by his greed, "
                                                  "too bad it couldn't lead him out."),
-            monsterclass("Living Corpse", "Z", "Necromancy is not a joke, but this person used to think it was.", 5)]
+            monsterclass("Living Corpse", "z", "Necromancy is not a joke, but this person used to think it was.", 5)]
 buildings = [buildingclass(timedelta(minutes=10), "Mine", "M"),
              buildingclass(timedelta(days=1), "Lantern", "L")]
 buildsbyname = lambda name: buildings[buildingnames().index(name)]
@@ -130,13 +130,13 @@ while True:
             roommap = searchroombycode(code).map
             roommap.printmap()
             coords = input("Coordinates for desired building in room?").lower().split()
-            x = int(coords[0])
-            y = int(coords[1])
             try:
-                roommap.set(x, y, buildsbyname(input("Name of building?")))
+                x = int(coords[0])
+                y = int(coords[1])
+                roommap.set(x, y, buildsbyname(input("Name of building?").capitalize()))
                 roommap.printmap()
             except:
-                print("Coordinates out of range, or building name not available")
+                print("Building canceled: Coordinates out of range, or building name not available")
         else:
             print("Build canceled")
     elif command in ["inspect", "i", "information", "zoom"]:
@@ -147,10 +147,10 @@ while True:
         if code in codes:
             roommap = searchroombycode(code).map
             roommap.printmap()
-            coords = input("Coordinates for desired building in room?").lower().split()
-            x = int(coords[0])
-            y = int(coords[1])
+            coords = input("Coordinates in room to inspect?").lower().split()
             try:
+                x = int(coords[0])
+                y = int(coords[1])
                 if roommap.array[x][y][0] != "-":
                     print(roommap.array[x][y][0].flavor)
                 else:
