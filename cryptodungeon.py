@@ -1,6 +1,9 @@
 import random
 from random import randint
+import datetime
+from datetime import timedelta
 
+timestart = datetime.datetime.now()
 codelength = 3
 percentrooms = 10
 numberofcombos = 0
@@ -15,11 +18,20 @@ class roomclass:
     def __init__(self):
         self.code = generatecode()
         self.size = randint(3, roomclass.maxsize)
-        self.map = [[["-"] for _ in range(self.size)] for _ in range(self.size)]
-        self.populate()
+        self.map = mapclass([[["-"] for _ in range(self.size)] for _ in range(self.size)])
+        self.map.populate()
+
+
+class mapclass:
+    def __init__(self, array):
+        self.array = array
+        self.size = len(array[0])
+
+    def set(self, x, y, change):
+        self.array[x][y] = [change]
 
     def printmap(self):
-        for y in self.map:
+        for y in self.array:
             for x in y:
                 if str(x)[2:-2] == "-":
                     print(str(x)[2:-2], end=" ")
@@ -28,17 +40,28 @@ class roomclass:
             print()
 
     def populate(self):
-        for y in self.map:
+        for y in self.array:
             for x in y:
                 if not bool(randint(0, roomclass.maxsize - self.size + 1)):
                     x[-1] = random.choice(monsters)
 
 
-class monsterclass:
-    def __init__(self, name, symbol, frequency=10):
+class boarditem:
+    def __init__(self, name, symbol):
         self.name = name
         self.symbol = symbol
+
+
+class monsterclass(boarditem):
+    def __init__(self, name, symbol, frequency=10):
+        super().__init__(name, symbol)
         self.frequency = frequency
+
+
+class buildingclass(boarditem):
+    def __init__(self, constructiondelay, name, symbol):
+        super().__init__(name, symbol)
+        self.constructiondelay = constructiondelay
 
 
 def generatecode():
@@ -56,12 +79,22 @@ def searchroombycode(code):
     assert False, "CODE DOESN'T EXIST IN ROOMS"
 
 
+def buildingnames():
+    names = []
+    for b in buildings:
+        names.append(b.name)
+    return names
+
+
 rooms = []
 codes = []
-monsters = [monsterclass("mongoloid", "M", 50),
+monsters = [monsterclass("Mongoloid", "M", 50),
             monsterclass("Skeleton", "S"),
             monsterclass("Pirate Skeleton", "P"),
             monsterclass("Living Corpse", "Z", 5)]
+buildings = [buildingclass("Mine", "M", timedelta(minutes=10)),
+             buildingclass("Lantern", "L", timedelta(days=1))]
+buildsbyname = lambda name: buildings[buildingnames().index(name)]
 for m in monsters.copy():
     for _ in range(m.frequency):
         monsters.append(m)
@@ -75,8 +108,30 @@ while len(codes) <= numberofrooms:
 
 print(codes[-1])
 while True:
-    code = input()
-    while code not in codes:
-        code = input()
-
-    searchroombycode(code).printmap()
+    action = input().lower()
+    if action.split()[0] in ["search", "s", "look", "find", "visit"]:
+        try:
+            code = action.split()[1]
+        except:
+            print(f"\n\nEnter a code after the command.\nSYNTAX: '{action.split()[0]} <code>'")
+        while code not in codes + ["q"]:
+            code = input("Not found. Input a code to search, enter 'q' to stop searching: ").lower()
+        searchroombycode(code).map.printmap()
+    elif action.split()[0] in ["build", "b", "construct"]:
+        code = action.split()[1]
+        try:
+            if code in codes:
+                roommap = searchroombycode(code).map
+                roommap.printmap()
+                coords = input("Coordinates for desired building in room?").lower().split()
+                x = int(coords[0])
+                y = int(coords[1])
+                try:
+                    roommap.set(x, y, buildsbyname(input("Name of building?")))
+                    roommap.printmap()
+                except:
+                    print("Coordinates out of range, or building name not available")
+            else:
+                print("Build canceled")
+        except:
+            print(f"\n\nEnter a code after the command.\nSYNTAX: '{action.split()[0]} <code>'")
