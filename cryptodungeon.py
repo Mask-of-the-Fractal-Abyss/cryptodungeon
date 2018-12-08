@@ -92,8 +92,8 @@ monsters = [monsterclass("Mongoloid", "M", 50),
             monsterclass("Skeleton", "S"),
             monsterclass("Pirate Skeleton", "P"),
             monsterclass("Living Corpse", "Z", 5)]
-buildings = [buildingclass("Mine", "M", timedelta(minutes=10)),
-             buildingclass("Lantern", "L", timedelta(days=1))]
+buildings = [buildingclass(timedelta(minutes=10), "Mine", "M"),
+             buildingclass(timedelta(days=1), "Lantern", "L")]
 buildsbyname = lambda name: buildings[buildingnames().index(name)]
 for m in monsters.copy():
     for _ in range(m.frequency):
