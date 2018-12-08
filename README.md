@@ -2,7 +2,7 @@
 This is a multiplayer text game.
 The finished product will allow participants to pass a .txt or .db file to each other (like chess notation!).  Some of the
 secret data only visible to one player (or neither player!) will be visible.  This game additionally has an interesting type of
-territory/land claiming system which is objectively similar to cryptocurrency.  When the program is first run, hundreds of rooms
+territory/land claiming system which is objectively similar to cryptocurrency.  When the program is first run, thousands of rooms
 are generated, along with their corresponding randomly generated code.  
 
 The room can only be accessed by knowing the code, and the code can only be found by repeatedly typing in codes into the game,
