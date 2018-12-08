@@ -1,80 +1,55 @@
 import random
 from random import randint
 
-seed = "21004"
-combos = 0
-rooms = []
-
-"""
-for i in range(int(seed[0]) + 1):
-    combos = combos + 26 ** i
-"""
+codelength = 3
+numberofcombos = 0
+for i in range(codelength):
+    numberofcombos += 26 ** i
+numberofrooms = numberofcombos
 
 
-class room:
-    def __init__(self, resources, size):
+class roomclass:
+    maxroomsize = 10
 
-        self.code = generate_code()
-        self.locked = True
-        self.content = []
+    def __init__(self):
+        self.code = generatecode()
+        self.size = randint(1, 10)
+        self.map = [[[] for _ in range(self.size)] for _ in range(self.size)]
 
-        for _ in range(size):
-            self.content.append(0)
-
-        for _ in range(resources):
-            self.content[randint(0, len(self.content) - 1)] += 1
-
-    def unlock(self, code):
-        if code == self.code:
-            self.locked = False
-            print("Unlocked!")
-        else:
-            print("Wrong code!")
-
-    def view(self):
-        if not self.locked:
-            return (self.content)
-        else:
-            print("Room is locked!")
+    def printmap(self):
+        for y in self.map:
+            for x in y:
+                print(x, end=" ")
+            print()
 
 
-def save_rooms(file):
-    for room in rooms:
-        pass
-
-
-def generate_code():
-    stuff = "abcdefghijklmnopqrstuvwxyz"
+def generatecode():
+    letters = "abcdefghijklmnopqrstuvwxyz"
     code = ""
-    for _ in range(int(seed[0]) + 1):
-        code = code + random.choice(stuff)
+    for _ in range(codelength):
+        code += random.choice(letters)
     return code
 
 
-def generate_rooms(n):
-    for _ in range(n):
-        rooms.append(room(randint(0, int(seed[4])), randint(1, (int(seed[4]) + 1))))
+def searchroombycode(code):
+    for r in rooms:
+        if r.code == code:
+            return r
+    assert False, "CODE DOESN'T EXIST IN ROOMS"
 
 
-def crack_lock(room):
-    while rooms[0].locked:
-        code = generate_code()
-        print(code)
-        rooms[0].unlock(code)
+rooms = []
+codes = []
+while len(codes) <= numberofrooms:
+    rooms.append(roomclass())
+    codes.append(rooms[-1].code)
+    if codes.count(codes[-1]) > 1:
+        codes.pop(-1)
+        rooms.pop(-1)
 
+print(codes[-1])
+while input() not in codes:
+    pass
 
-generate_rooms(5)
-
-# try rooms[0].view()
-# then crack_lock(rooms[0])
-# then again rooms[0].view()
-
-
-
-
-
-
-
-
-
-
+code = input("REINPUT CODE")
+searchroombycode(code).printmap()
