@@ -22,7 +22,7 @@ class roomclass:
         self.map.populate()
 
 
-class mapclass:
+class mapclass:  # Map class used for each room, 2D array
     def __init__(self, array):
         self.array = array
         self.size = len(array[0])
@@ -30,7 +30,7 @@ class mapclass:
     def set(self, x, y, change):
         self.array[x][y] = [change]
 
-    def printmap(self):
+    def printmap(self):  # Prints the 2D array
         for y in self.array:
             for x in y:
                 if str(x)[2:-2] == "-":
@@ -39,26 +39,27 @@ class mapclass:
                     print(x[0].symbol, end=" ")
             print()
 
-    def populate(self):
+    def populate(self):  # Fills the 2D array with random monsters
         for y in self.array:
             for x in y:
                 if not bool(randint(0, roomclass.maxsize - self.size + 1)):
                     x[-1] = random.choice(monsters)
 
 
-class boarditem:
+class boarditem:  # Super class for all objects that can be built/spawned on the map
     def __init__(self, name, symbol):
         self.name = name
-        self.symbol = symbol
+        self.symbol = symbol  # Symbol is the letter tht will represent them on the board
 
 
-class monsterclass(boarditem):
-    def __init__(self, name, symbol, frequency=10):
+class monsterclass(boarditem):  # Class for monsters which appear on the board
+    def __init__(self, name, symbol, flavor="This monster has no flavor.", frequency=10):
         super().__init__(name, symbol)
+        self.flavor = flavor
         self.frequency = frequency
 
 
-class buildingclass(boarditem):
+class buildingclass(boarditem):  # Class for buildings on the board
     def __init__(self, constructiondelay, name, symbol):
         super().__init__(name, symbol)
         self.constructiondelay = constructiondelay
@@ -88,10 +89,12 @@ def buildingnames():
 
 rooms = []
 codes = []
-monsters = [monsterclass("Mongoloid", "M", 50),
-            monsterclass("Skeleton", "S"),
-            monsterclass("Pirate Skeleton", "P"),
-            monsterclass("Living Corpse", "Z", 5)]
+monsters = [monsterclass("Mongoloid", "M", "The Mongoloid was once human, like yourself, but his form has been "
+                                           "distored by the dark magicks that dwell here.", 50),
+            monsterclass("Skeleton", "S", "Battered bones: a dried, but not completely empty skeleton..."),
+            monsterclass("Pirate Skeleton", "P", "The pirate skeleton was lead into the darkness by his greed, "
+                                                 "too bad it couldn't lead him out."),
+            monsterclass("Living Corpse", "Z", "Necromancy is not a joke, but this person used to think it was.", 5)]
 buildings = [buildingclass(timedelta(minutes=10), "Mine", "M"),
              buildingclass(timedelta(days=1), "Lantern", "L")]
 buildsbyname = lambda name: buildings[buildingnames().index(name)]
@@ -109,7 +112,8 @@ while len(codes) <= numberofrooms:
 print(codes[-1])
 while True:
     action = input().lower()
-    if action.split()[0] in ["search", "s", "look", "find", "visit"]:
+    command = action.split()[0]
+    if command in ["search", "s", "look", "find", "visit"]:
         try:
             code = action.split()[1]
         except:
@@ -117,21 +121,39 @@ while True:
         while code not in codes + ["q"]:
             code = input("Not found. Input a code to search, enter 'q' to stop searching: ").lower()
         searchroombycode(code).map.printmap()
-    elif action.split()[0] in ["build", "b", "construct"]:
-        code = action.split()[1]
+    elif command in ["build", "b", "construct"]:
         try:
-            if code in codes:
-                roommap = searchroombycode(code).map
-                roommap.printmap()
-                coords = input("Coordinates for desired building in room?").lower().split()
-                x = int(coords[0])
-                y = int(coords[1])
-                try:
-                    roommap.set(x, y, buildsbyname(input("Name of building?")))
-                    roommap.printmap()
-                except:
-                    print("Coordinates out of range, or building name not available")
-            else:
-                print("Build canceled")
+            code = action.split()[1]
         except:
             print(f"\n\nEnter a code after the command.\nSYNTAX: '{action.split()[0]} <code>'")
+        if code in codes:
+            roommap = searchroombycode(code).map
+            roommap.printmap()
+            coords = input("Coordinates for desired building in room?").lower().split()
+            x = int(coords[0])
+            y = int(coords[1])
+            try:
+                roommap.set(x, y, buildsbyname(input("Name of building?")))
+                roommap.printmap()
+            except:
+                print("Coordinates out of range, or building name not available")
+        else:
+            print("Build canceled")
+    elif command in ["inspect", "i", "information", "zoom"]:
+        try:
+            code = action.split()[1]
+        except:
+            print(f"\n\nEnter a code after the command.\nSYNTAX: '{action.split()[0]} <code>'")
+        if code in codes:
+            roommap = searchroombycode(code).map
+            roommap.printmap()
+            coords = input("Coordinates for desired building in room?").lower().split()
+            x = int(coords[0])
+            y = int(coords[1])
+            try:
+                if roommap.array[x][y][0] != "-":
+                    print(roommap.array[x][y][0].flavor)
+                else:
+                    print("Just an empty tile...")
+            except:
+                print("Coordinates out of range.")
