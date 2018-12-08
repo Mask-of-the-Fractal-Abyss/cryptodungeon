@@ -2,25 +2,43 @@ import random
 from random import randint
 
 codelength = 3
+percentrooms = 10
 numberofcombos = 0
-for i in range(codelength):
+for i in range(codelength + 1):
     numberofcombos += 26 ** i
-numberofrooms = numberofcombos
+numberofrooms = numberofcombos / (100 / percentrooms)
 
 
 class roomclass:
-    maxroomsize = 10
+    maxsize = 7
 
     def __init__(self):
         self.code = generatecode()
-        self.size = randint(1, 10)
-        self.map = [[[] for _ in range(self.size)] for _ in range(self.size)]
+        self.size = randint(3, roomclass.maxsize)
+        self.map = [[["-"] for _ in range(self.size)] for _ in range(self.size)]
+        self.populate()
 
     def printmap(self):
         for y in self.map:
             for x in y:
-                print(x, end=" ")
+                if str(x)[2:-2] == "-":
+                    print(str(x)[2:-2], end=" ")
+                else:
+                    print(x[0].symbol, end=" ")
             print()
+
+    def populate(self):
+        for y in self.map:
+            for x in y:
+                if not bool(randint(0, roomclass.maxsize - self.size + 1)):
+                    x[-1] = random.choice(monsters)
+
+
+class monsterclass:
+    def __init__(self, name, symbol, frequency=10):
+        self.name = name
+        self.symbol = symbol
+        self.frequency = frequency
 
 
 def generatecode():
@@ -40,6 +58,14 @@ def searchroombycode(code):
 
 rooms = []
 codes = []
+monsters = [monsterclass("mongoloid", "M", 50),
+            monsterclass("Skeleton", "S"),
+            monsterclass("Pirate Skeleton", "P"),
+            monsterclass("Living Corpse", "Z", 5)]
+for m in monsters.copy():
+    for _ in range(m.frequency):
+        monsters.append(m)
+
 while len(codes) <= numberofrooms:
     rooms.append(roomclass())
     codes.append(rooms[-1].code)
@@ -48,8 +74,9 @@ while len(codes) <= numberofrooms:
         rooms.pop(-1)
 
 print(codes[-1])
-while input() not in codes:
-    pass
+while True:
+    code = input()
+    while code not in codes:
+        code = input()
 
-code = input("REINPUT CODE")
-searchroombycode(code).printmap()
+    searchroombycode(code).printmap()
