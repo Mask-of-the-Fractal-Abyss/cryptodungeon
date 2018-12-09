@@ -1,7 +1,7 @@
 # cryptodungeon
 This is a multiplayer text game.
 The finished product will allow participants to pass a .txt or .db file to each other (like chess notation!).  Some of the
-secret data only visible to one player (or neither player!) will be visible.  This game additionally has an interesting type of
+secret data will only visible to one player (or neither player!).  This game additionally has an interesting type of
 territory/land claiming system which is objectively similar to cryptocurrency.  When the program is first run, thousands of rooms
 are generated, along with their corresponding randomly generated code.  
 
