@@ -3,6 +3,8 @@ from random import randint
 import datetime
 from datetime import timedelta
 import sys
+import crypt
+import pickle
 
 print("You've just taken your first steps into a dark and deadly dungeon.  Thousands of rooms lie before you, waiting "
       "to be explored and conquered, \nbut this isn't a normal dungeon like you've encountered before, this is a "
@@ -76,9 +78,10 @@ class buildingclass(boarditem):  # Class for buildings on the board
 
 
 class playerclass(boarditem):
-    def __init__(self, name, symbol, room):
+    def __init__(self, name, symbol, health, room):
         super().__init__(name, symbol)
         self.room = room
+        self.health = health
 
 
 def generatecode():
@@ -111,36 +114,60 @@ def getcoords(item, arr):
     return None
 
 
-rooms = []
-codes = []
+def newgame():
+    rooms = []
+    codes = []
+    for m in monsters.copy():
+        for _ in range(m.frequency):
+            monsters.append(m)
+
+    while len(codes) <= numberofrooms:
+        rooms.append(roomclass())
+        codes.append(rooms[-1].code)
+        if codes.count(codes[-1]) > 1:
+            codes.pop(-1)
+            rooms.pop(-1)
+    return rooms, codes
+
+
 monsters = [monsterclass("Mongoloid", "m", "The Mongoloid was once human, like yourself, but his form has been "
-                                           "distored by the dark magicks that dwell here.", 50),
+                                           "distorted by the dark magicks that dwell here.", 50),
             monsterclass("Skeleton", "s", "Battered bones: a dried, but not completely empty skeleton..."),
             monsterclass("Pirate Skeleton", "p", "The pirate skeleton was lead into the darkness by his greed, "
                                                  "too bad it couldn't lead him out."),
             monsterclass("Living Corpse", "z", "Necromancy is not a joke, but this person used to think it was.", 5)]
 buildings = [buildingclass(timedelta(minutes=10), "Mine", "M"),
              buildingclass(timedelta(days=1), "Lantern", "L")]
+
+if len(crypt.getlines()) == 0:
+    totalplayers = int(input("You are the first to enter into this dungeon, how many total players will be entering "
+                             "including yourself?"))
+    publickey = int(input("Please create an integer public key that will be used to encrypt the file to be passed.  "
+                          "\nMake sure to share it with the other players."))
+    key = randint(1, 100)
+    crypt.newline(key)
+    rooms, codes = newgame()
+    crypt.saveroomsandcodes(rooms, codes, key)
+else:
+    publickey = int(input("Enter the public key for this game: "))
+    key = int(int(crypt.lineatindex(0)))  # / publickey)
+    print(key)
+    rooms, codes = crypt.extractroomsandcodes(key)
+    print(rooms)
+playername = input("Enter your name: ")
+player = playerclass(playername, playername.capitalize()[0], 10, None)
 buildsbyname = lambda name: buildings[buildingnames().index(name)]
-for m in monsters.copy():
-    for _ in range(m.frequency):
-        monsters.append(m)
-
-while len(codes) <= numberofrooms:
-    rooms.append(roomclass())
-    codes.append(rooms[-1].code)
-    if codes.count(codes[-1]) > 1:
-        codes.pop(-1)
-        rooms.pop(-1)
-
-player = playerclass(input("Enter your name: "), "@", None)
-print("Use the search command to begin looking for unlockable rooms:\nSYNTAX: 'search <code>'\n\nMany commands can be "
-      "abbreviated or typed in different ways, try 's <code>' or 'visit <code>'\n\n"
-      "Use the help command to get a list of valid commands: \nSYNTAX: 'help'")
+print("\nUse the search command to begin looking for unlockable rooms:\nSYNTAX: 'search <code>'\n\nMany commands can "
+      "be abbreviated or typed in different ways, try 's <code>' or 'visit <code>'\n\n"
+      "Use the help command to get a list of valid commands: \nSYNTAX: 'help'\n")
 print(f"Here is your one free code, use it wisely: {random.choice(codes)}")
+
 while True:
     action = input().lower()
-    command = action.split()[0]
+    try:
+        command = action.split()[0]
+    except:
+        print("Enter a command.")
     if command in ["search", "s", "look", "find", "visit"]:
         try:
             code = action.split()[1]
@@ -236,3 +263,10 @@ while True:
             print("You left the room")
         else:
             print("You must be on an edge square of a room to leave.")
+    elif command in ["help", "h"]:
+        print('List of current implemented commands: \n- ["search", "s", "look", "find", "visit"] <code>\n- ["build", '
+              '"b", "construct"] <code>\n- ["inspect", "i", "information", "zoom"] <code>\n- ["m", "move"] <direction '
+              '(w, a, s, d)>\n- ["l", "leave"]\nIf you are in a room, you don\'t need to input a room code with the '
+              'command.')
+    elif command == "EXIT":
+        break
