@@ -11,7 +11,7 @@ print("You've just taken your first steps into a dark and deadly dungeon.  Thous
       "Cryptodungeon...\n")
 
 timestart = datetime.datetime.now()
-codelength = 3
+codelength = 2
 percentrooms = 10
 numberofcombos = 0
 for i in range(codelength + 1):
@@ -36,6 +36,9 @@ class mapclass:  # Map class used for each room, 2D array
 
     def set(self, x, y, change):
         self.array[x][y] = change
+
+    def get(self, x, y):
+        return self.array[x][y]
 
     def swap(self, x1, y1, x2, y2):
         temp = self.array[x1][y1]
@@ -142,18 +145,13 @@ buildings = [buildingclass(timedelta(minutes=10), "Mine", "M"),
 if len(crypt.getlines()) == 0:
     totalplayers = int(input("You are the first to enter into this dungeon, how many total players will be entering "
                              "including yourself?"))
-    publickey = int(input("Please create an integer public key that will be used to encrypt the file to be passed.  "
-                          "\nMake sure to share it with the other players."))
-    key = randint(1, 100)
+    key = 1
     crypt.newline(key)
     rooms, codes = newgame()
     crypt.saveroomsandcodes(rooms, codes, key)
 else:
-    publickey = int(input("Enter the public key for this game: "))
-    key = int(int(crypt.lineatindex(0)))  # / publickey)
-    print(key)
+    key = int(int(crypt.lineatindex(0)))
     rooms, codes = crypt.extractroomsandcodes(key)
-    print(rooms)
 playername = input("Enter your name: ")
 player = playerclass(playername, playername.capitalize()[0], 10, None)
 buildsbyname = lambda name: buildings[buildingnames().index(name)]
@@ -163,7 +161,7 @@ print("\nUse the search command to begin looking for unlockable rooms:\nSYNTAX: 
 print(f"Here is your one free code, use it wisely: {random.choice(codes)}")
 
 while True:
-    action = input().lower()
+    action = input("Enter a command: ").lower()
     try:
         command = action.split()[0]
     except:
@@ -210,8 +208,11 @@ while True:
             try:
                 x = int(coords[0])
                 y = int(coords[1])
-                room.map.set(x, y, buildsbyname(input("Name of building?").capitalize()))
-                room.map.printmap()
+                if room.map.get(x, y) == "-":
+                    room.map.set(x, y, buildsbyname(input("Name of building?").capitalize()))
+                    room.map.printmap()
+                else:
+                    print("There is already an object here.")
             except:
                 print("Building canceled: Coordinates out of range, or building name not available")
         else:
@@ -268,5 +269,6 @@ while True:
               '"b", "construct"] <code>\n- ["inspect", "i", "information", "zoom"] <code>\n- ["m", "move"] <direction '
               '(w, a, s, d)>\n- ["l", "leave"]\nIf you are in a room, you don\'t need to input a room code with the '
               'command.')
-    elif command == "EXIT":
-        break
+    elif command == "exit":
+        crypt.saveroomsandcodes(rooms, codes, key)
+        print("Done")

@@ -1,10 +1,17 @@
 from random import randint
 import pickle
+import ast
 
 
 def newline(line):
     with open("cryptodungeon.txt", "a") as crypt:
         crypt.write(str(line) + "\n")
+
+
+def rewrite(lines):
+    with open("cryptodungeon.txt", "w") as crypt:
+        for line in lines:
+            crypt.write(str(line) + "\n")
 
 
 def getlines():
@@ -39,8 +46,10 @@ def saveroomsandcodes(rooms, codes, key):
     newline(encrypttext(codes, key))
 
 
-def extractroomsandcodes(key):
-    codes = decrypttext(getlines()[-1], key)[1:-1].split("', '")
-    codes[0] = codes[0][1:]
-    codes[-1] = codes[0][:]
-    return decrypttext(getlines()[-2]), codes
+def extractroomsandcodes(key=1):
+    codes = list(ast.literal_eval(decrypttext(getlines()[-1], key)[1:-1]))
+    rooms = list(ast.literal_eval(decrypttext(getlines()[-2])[1:-1]))
+    for room in rooms:
+        pickled = pickle.loads(room)
+        rooms[rooms.index(room)] = pickled
+    return rooms, codes
