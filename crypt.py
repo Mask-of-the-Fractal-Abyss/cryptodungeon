@@ -24,30 +24,30 @@ def lineatindex(index):
         return crypt.readlines()[index]
 
 
-def encrypttext(plaintext, key=1):
+def encrypttext(plaintext):
     cyphertext = ""
     for char in str(plaintext):
-        cyphertext += str(ord(char) * key) + " "
+        cyphertext += str(ord(char)) + " "
     return cyphertext
 
 
-def decrypttext(cyphertext, key=1):
+def decrypttext(cyphertext):
     plaintext = ""
     for num in cyphertext.split():
-        plaintext += str(chr(int(int(num) / key)))
+        plaintext += str(chr(int(int(num))))
     return plaintext
 
 
-def saveroomsandcodes(rooms, codes, key):
+def saveroomsandcodes(rooms, codes):
     encryptrooms = []
     for room in rooms:
         encryptrooms.append(pickle.dumps(room))
-    newline(encrypttext(encryptrooms, key))
-    newline(encrypttext(codes, key))
+    newline(encrypttext(encryptrooms))
+    newline(encrypttext(codes))
 
 
-def extractroomsandcodes(key=1):
-    codes = list(ast.literal_eval(decrypttext(getlines()[-1], key)[1:-1]))
+def extractroomsandcodes():
+    codes = list(ast.literal_eval(decrypttext(getlines()[-1])[1:-1]))
     rooms = list(ast.literal_eval(decrypttext(getlines()[-2])[1:-1]))
     for room in rooms:
         pickled = pickle.loads(room)
