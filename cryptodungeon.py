@@ -59,13 +59,15 @@ class mapclass:  # Map class used for each room, 2D array
             self.array[x][y] = "-"
 
     def printmap(self):  # Prints the 2D array
+        print()
         for y in self.array:
+            print("\n    ", end="")
             for x in y:
                 if str(x) == "-":
                     print(str(x), end=" ")
                 else:
                     print(x.symbol, end=" ")
-            print()
+        print("\n\n")
 
     def populate(self):  # Fills the 2D array with random monsters
         for y in self.array:
@@ -82,20 +84,20 @@ class mapclass:  # Map class used for each room, 2D array
 
 
 class boarditem:  # Super class for all objects that can be built/spawned on the map
-    def __init__(self, name, symbol, flavor="This object has no flavor", health=10, attack=10, defense=3, counter=1, inventory=[]):
+    def __init__(self, name, symbol, flavor="This object has no flavor", attack=10, defense=3, inventory=[], counter=1, health=10):
+        self.health = health
         self.counter = counter
         self.inventory = inventory
         self.defense = defense
         self.attack = attack
-        self.health = health
-        self.name = name
-        self.symbol = symbol  # Symbol is the letter tht will represent them on the board
         self.flavor = flavor
+        self.symbol = symbol  # Symbol is the letter tht will represent them on the board
+        self.name = name
 
 
 class monsterclass(boarditem):  # Class for monsters which appear on the board
-    def __init__(self, name, symbol, flavor="This object has no flavor", frequency=10, health=10, attack=10, defense=3, counter=1, inventory=[]):
-        super().__init__(name, symbol, flavor, health, attack, defense, counter, inventory)
+    def __init__(self, name, symbol, flavor="This object has no flavor", frequency=10, attack=10, defense=3, inventory=[], counter=1, health=10):
+        super().__init__(name, symbol, flavor, attack, defense, inventory, counter, health)
         self.frequency = frequency
 
 
@@ -105,8 +107,8 @@ class buildingclass(boarditem):  # Class for buildings on the board
 
 
 class playerclass(boarditem):
-    def __init__(self, name, symbol, room, flavor="", health=10, attack=10, defense=3, counter=1, inventory=[]):
-        super().__init__(name, symbol, flavor, health, attack, defense, counter, inventory)
+    def __init__(self, name, symbol, room, flavor="", attack=10, defense=3, inventory=[], counter=1, health=10):
+        super().__init__(name, symbol, flavor, attack, defense, inventory, counter, health)
         self.room = room
 
 
@@ -169,7 +171,6 @@ if len(crypt.getlines()) == 0:
     totalplayers = int(input("You are the first to enter into this dungeon, how many total players will be entering "
                              "including yourself?"))
     rooms, codes = newgame()
-    crypt.saveroomsandcodes(rooms, codes)
     playername = input("Enter your name: ")
     playerflavor = input("Enter an optional flavor text for your character: ")
     player = playerclass(playername, playername.capitalize()[0], None, playerflavor)
@@ -296,31 +297,37 @@ while True:
         if player.room is not None:
             #try:
                 x, y = getcoords(player, player.room.map.array)
-                getcoords = {"w": lambda x, y: player.room.map.get(x - 1, y),
+                getcoordinates = {"w": lambda x, y: player.room.map.get(x - 1, y),
                              "s": lambda x, y: player.room.map.get(x + 1, y),
                              "a": lambda x, y: player.room.map.get(x, y - 1),
                              "d": lambda x, y: player.room.map.get(x, y + 1)}[code]
-                subject = getcoords(y, x)
-                print(subject.health)
-                subject.health -= player.attack - subject.defense
-                print(f"You dealt {player.attack - subject.defense} damage.")
-                if subject.health < 1:
-                    player.room.map.set(x, y, "-")
-                    print("You destroyed {subject.name}")
+                subject = getcoordinates(y, x)
+                if subject != "-":
+                    subject.health -= player.attack - subject.defense
+                    print(f"You dealt {player.attack - subject.defense} damage.")
+                    print(f"{subject.name} has {subject.health} left.")
+                    if subject.health < 1:
+                        x, y = getcoords(subject, player.room.map.array)
+                        player.room.map.set(y, x, "-")
+                        print(f"\nYou destroyed {subject.name}")
+                        player.room.map.printmap()
+                    else:
+                        player.health -= subject.counter
+                        print(f"You took {subject.counter} damage.\nYour health is at {player.health}")
+                        subject.counter += 1
                 else:
-                    player.health -= subject.counter
-                    print(f"You took {subject.counter} damage.\nYour health is at {player.health}")
-                    subject.counter += 1
-                player.room.map.printmap()
+                    print("You cannot attack an empty space.")
             #except:
-            #    print("input valid movement (w, a, s, d)")
+            #    print("input valid direction (w, a, s, d)")
         else:
             print("You must enter a room first")
 
     elif command in ["stats"]:
         print(f"""
         HEALTH: {player.health}
+        DEFENSE: {player.defense}
         ATTACK: {player.attack}
+        COUNTER: {player.counter}
         EQUIPS: {player.inventory}
         """)
     elif command in ["l", "leave"]:
@@ -332,14 +339,16 @@ while True:
         else:
             print("You must be on an edge square of a room to leave.")
     elif command in ["help", "h"]:
-        print('List of current implemented commands: '
-              '\n- ["search", "s", "look", "find", "visit"] <code>'
-              '\n- ["build", "b", "construct"] <code>'
-              '\n- ["examine", "e"] <coordinates>'
-              '\n- ["m", "move"] <direction (w, a, s, d)>'
-              '\n- ["stats"] prints your current health/attack/items etc.'
-              '\n- ["l", "leave"]'
-              '\nIf you are in a room, you don\'t need to input a room code with the command.')
+        print("""
+        List of current implemented commands: 
+        - ["search", "s", "look", "find", "visit"] <code>
+        - ["build", "b", "construct"] <code>
+        - ["examine", "e"] <coordinates>
+        - ["m", "move"] <direction (w, a, s, d)>
+        - ["stats"] prints your current health/attack/items etc.
+        - ["l", "leave"]
+        If you are in a room, you don\'t need to input a room code with the command.
+        """)
     elif command == "exit":
         if player.room is None:
             print("Can't save: You are not in a room")
