@@ -44,6 +44,7 @@ def saveroomsandcodes(rooms, codes):
         encryptrooms.append(pickle.dumps(room))
     newline(encrypttext(encryptrooms))
     newline(encrypttext(codes))
+    newline(encrypttext())
 
 
 def extractroomsandcodes():

@@ -1,9 +1,10 @@
 import random
 from random import randint
+import pickle
 import items
 import sys
 import crypt
-import pickle
+from boardobjects import *
 
 print("You've just taken your first steps into a dark and deadly dungeon.  Thousands of rooms lie before you, waiting "
       "to be explored and conquered, \nbut this isn't a normal dungeon like you've encountered before, this is a "
@@ -12,6 +13,7 @@ print("You've just taken your first steps into a dark and deadly dungeon.  Thous
 codelength = 2
 percentrooms = 10
 numberofcombos = 0
+moved = False
 for i in range(codelength + 1):
     numberofcombos += 26 ** i
 numberofrooms = numberofcombos / (100 / percentrooms)
@@ -73,7 +75,7 @@ class mapclass:  # Map class used for each room, 2D array
         for y in self.array:
             for x in range(len(y)):
                 if not bool(randint(0, roomclass.maxsize - self.size + 1)):
-                    y[x] = random.choice(monsters)
+                    y[x] = newmonsterinstance()
 
     def searchfortype(self, searchtype):
         for y in self.array:
@@ -81,35 +83,6 @@ class mapclass:  # Map class used for each room, 2D array
                 if type(x) == searchtype:
                     return x
         return None
-
-
-class boarditem:  # Super class for all objects that can be built/spawned on the map
-    def __init__(self, name, symbol, flavor="This object has no flavor", attack=10, defense=3, inventory=[], counter=1, health=10):
-        self.health = health
-        self.counter = counter
-        self.inventory = inventory
-        self.defense = defense
-        self.attack = attack
-        self.flavor = flavor
-        self.symbol = symbol  # Symbol is the letter tht will represent them on the board
-        self.name = name
-
-
-class monsterclass(boarditem):  # Class for monsters which appear on the board
-    def __init__(self, name, symbol, flavor="This object has no flavor", frequency=10, attack=10, defense=3, inventory=[], counter=1, health=10):
-        super().__init__(name, symbol, flavor, attack, defense, inventory, counter, health)
-        self.frequency = frequency
-
-
-class buildingclass(boarditem):  # Class for buildings on the board
-    def __init__(self, name, symbol, flavor="This object has no flavor"):
-        super().__init__(name, symbol, flavor)
-
-
-class playerclass(boarditem):
-    def __init__(self, name, symbol, room, flavor="", attack=10, defense=3, inventory=[], counter=1, health=10):
-        super().__init__(name, symbol, flavor, attack, defense, inventory, counter, health)
-        self.room = room
 
 
 def generatecode():
@@ -145,9 +118,6 @@ def getcoords(item, arr):
 def newgame():
     rooms = []
     codes = []
-    for m in monsters.copy():
-        for _ in range(m.frequency):
-            monsters.append(m)
 
     while len(codes) <= numberofrooms:
         rooms.append(roomclass())
@@ -158,12 +128,6 @@ def newgame():
     return rooms, codes
 
 
-monsters = [monsterclass("Mongoloid", "m", "The Mongoloid was once human, like yourself, but his form has been "
-                                           "distorted by the dark magicks that dwell here.", 50),
-            monsterclass("Skeleton", "s", "Battered bones: a dried, but not completely empty skeleton..."),
-            monsterclass("Pirate Skeleton", "p", "The pirate skeleton was lead into the darkness by his greed, "
-                                                 "too bad it couldn't lead him out."),
-            monsterclass("Living Corpse", "z", "Necromancy is not a joke, but this person used to think it was.", 5)]
 buildings = [buildingclass("Mine", "M"),
              buildingclass("Lantern", "L")]
 
@@ -271,53 +235,57 @@ while True:
             print(f"\n\nEnter a code after the command.\nSYNTAX: '{command} <coordinates>'\n- Make sure you are in a "
                   f"room before you use this command.\n")
     elif command in ["m", "move"]:
-        try:
-            code = action.split()[1]
-        except:
-            print(f"\n\nEnter a code after the command.\nSYNTAX: '{command} <direction (w, a, s, d)>'")
-        if player.room is not None:
+        if not moved:
             try:
-                x, y = getcoords(player, player.room.map.array)
-                swap = {"w": lambda x, y: player.room.map.swap(x, y, x - 1, y),
-                        "s": lambda x, y: player.room.map.swap(x, y, x + 1, y),
-                        "a": lambda x, y: player.room.map.swap(x, y, x, y - 1),
-                        "d": lambda x, y: player.room.map.swap(x, y, x, y + 1)}[code]
-                # player.room.map.move(y, x, code)
-                swap(y, x)
-                player.room.map.printmap()
+                code = action.split()[1]
             except:
-                print("input valid movement (w, a, s, d)")
+                print(f"\n\nEnter a code after the command.\nSYNTAX: '{command} <direction (w, a, s, d)>'")
+            if player.room is not None:
+                try:
+                    x, y = getcoords(player, player.room.map.array)
+                    swap = {"w": lambda x, y: player.room.map.swap(x, y, x - 1, y),
+                            "s": lambda x, y: player.room.map.swap(x, y, x + 1, y),
+                            "a": lambda x, y: player.room.map.swap(x, y, x, y - 1),
+                            "d": lambda x, y: player.room.map.swap(x, y, x, y + 1)}[code]
+                    # player.room.map.move(y, x, code)
+                    swap(y, x)
+                    player.room.map.printmap()
+                except:
+                    print("input valid movement (w, a, s, d)")
+            else:
+                print("You must enter a room first")
         else:
-            print("You must enter a room first")
+            print("You can only move once a turn")
     elif command in ["a", "attack"]:
         try:
             code = action.split()[1]
         except:
             print(f"\n\nEnter a code after the command.\nSYNTAX: '{command} <direction (w, a, s, d)>'")
         if player.room is not None:
-            #try:
-                x, y = getcoords(player, player.room.map.array)
-                getcoordinates = {"w": lambda x, y: player.room.map.get(x - 1, y),
-                             "s": lambda x, y: player.room.map.get(x + 1, y),
-                             "a": lambda x, y: player.room.map.get(x, y - 1),
-                             "d": lambda x, y: player.room.map.get(x, y + 1)}[code]
-                subject = getcoordinates(y, x)
-                if subject != "-":
-                    subject.health -= player.attack - subject.defense
-                    print(f"You dealt {player.attack - subject.defense} damage.")
-                    print(f"{subject.name} has {subject.health} left.")
-                    if subject.health < 1:
-                        x, y = getcoords(subject, player.room.map.array)
-                        player.room.map.set(y, x, "-")
-                        print(f"\nYou destroyed {subject.name}")
-                        player.room.map.printmap()
-                    else:
-                        player.health -= subject.counter
-                        print(f"You took {subject.counter} damage.\nYour health is at {player.health}")
-                        subject.counter += 1
+            # try:
+            x, y = getcoords(player, player.room.map.array)
+            getcoordinates = {"w": lambda x, y: (x - 1, y),
+                              "s": lambda x, y: (x + 1, y),
+                              "a": lambda x, y: (x, y - 1),
+                              "d": lambda x, y: (x, y + 1)}[code]
+            xp, yp = getcoordinates(y, x)
+            monster = player.room.map.get(xp, yp)
+            if monster != "-":
+                monster.health -= player.attack - monster.defense
+                print(f"You dealt {player.attack - monster.defense} damage.")
+                if monster.health < 1:
+                    x, y = getcoords(monster, player.room.map.array)
+                    player.room.map.set(y, x, "-")
+                    print(f"\nYou destroyed {monster.name}")
+                    player.room.map.printmap()
                 else:
-                    print("You cannot attack an empty space.")
-            #except:
+                    player.health -= monster.counter
+                    print(f"You took {monster.counter} damage.\nYour health is at {player.health}")
+                    print(f"{monster.name} has {monster.health} health left.")
+                    monster.counter += 1
+            else:
+                print("You cannot attack an empty space.")
+            # except:
             #    print("input valid direction (w, a, s, d)")
         else:
             print("You must enter a room first")
@@ -352,8 +320,8 @@ while True:
     elif command == "exit":
         if player.room is None:
             print("Can't save: You are not in a room")
+        elif not moved:
+            crypt.saveroomsandcodes(rooms, codes)
+            print("Saved Successfully")
             break
-        crypt.saveroomsandcodes(rooms, codes)
-        print("Saved Successfully")
-        break
 print("\nGAME OVER:\nYou have been ENCRYPTED")
